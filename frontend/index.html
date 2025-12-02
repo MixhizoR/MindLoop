@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mikro-Öğrenzme: Çalışma Ekranı</title>
+    <title>Mikro-Öğrenme: Çalışma Ekranı</title>
+    <!-- Tailwind CSS CDN EKLENDİ (Gerekli) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Temel Stil Dosyası -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-50 app-container">
@@ -12,11 +15,12 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-indigo-600">Spaced Repetition Öğrenme</h1>
             <nav>
-                <a href="upload.html">
+                <a href="upload.html"> 
                 <button id="goToUpload" class="px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-150 ease-in-out">
                     İçerik Yükle
+                    </a>
                 </button>
-                </a>
+                
             </nav>
         </div>
     </header>
@@ -40,8 +44,8 @@
                     <button id="showAnswer" class="flex-1 px-4 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-700 transition duration-150">
                         Cevabı Göster
                     </button>
-                    <!-- Bu butonlar, cevap göründükten sonra ortaya çıkabilir -->
-                    <button id="markEasy" class="flex-1 px-4 py-3 bg-green-500 text-white font-semibold rounded-xl shadow-md hover:bg-green-600 transition duration-150">
+                    <!-- Bu butonlar, cevap göründükten sonra ortaya çıkacak -->
+                    <button id="markEasy" class="flex-1 px-4 py-3 bg-green-500 text-white font-semibold rounded-xl shadow-md hover:bg-green-600 transition duration-150 hidden">
                         Kolaydı (İyi biliyorum)
                     </button>
                     <button id="markHard" class="flex-1 px-4 py-3 bg-red-500 text-white font-semibold rounded-xl shadow-md hover:bg-red-600 transition duration-150 hidden">
@@ -54,6 +58,5 @@
 
     <!-- JavaScript Dosyası -->
     <script type="text/javascript" src="app.js"></script>
-    
 </body>
 </html>
