@@ -1,62 +1,143 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mikro-Öğrenme: Çalışma Ekranı</title>
-    <!-- Tailwind CSS CDN EKLENDİ (Gerekli) -->
+
+    <link rel="icon" type="image/jpeg" href="mindloop.jpeg">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Temel Stil Dosyası -->
     <link rel="stylesheet" href="style.css">
+    <!-- İkonlar -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body class="bg-gray-50 app-container">
-    <!-- Başlık ve Navigasyon -->
-    <header class="bg-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-indigo-600">Spaced Repetition Öğrenme</h1>
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-100 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-blue-900 flex items-center gap-2">
+                <i class="fa-solid fa-brain"></i> Spaced Repetition
+            </h1>
             <nav>
-                <a href="upload.html"> 
-                <button id="goToUpload" class="px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-150 ease-in-out">
-                    İçerik Yükle
-                    </a>
-                </button>
-                
+                <a href="upload.html">
+                    <button
+                        class="px-5 py-2.5 bg-indigo-50 text-blue-900 font-semibold rounded-lg hover:bg-indigo-100 transition duration-200 border border-indigo-100 flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> İçerik Yükle
+                    </button>
+                </a>
             </nav>
         </div>
     </header>
 
-    <!-- Ana İçerik Alanı -->
-    <main class="flex-grow flex items-center justify-center p-4">
-        <div class="w-full max-w-xl">
-            <!-- Mesaj Kutusu -->
-            <div id="messageBox" class="hidden p-3 rounded-lg text-center mt-4"></div>
+    <!-- Ana İçerik -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4 overflow-hidden relative">
 
-            <!-- Öğrenme Kartı/Soru Alanı -->
-            <div id="learningCard" class="bg-white p-6 rounded-xl shadow-2xl border-t-8 border-indigo-600">
-                <p class="text-sm font-medium text-gray-500 mb-2">Sıradaki Mikro-Öğrenme Kartınız</p>
-                <h2 class="text-2xl font-bold text-gray-900 mb-4" id="cardTitle">Kart Başlığı Yükleniyor...</h2>
-                <div class="text-gray-700 mb-6 min-h-[100px]" id="cardContent">
-                    <p>Sistem backend'den verileri çekiyor. Lütfen bekleyin.</p>
+        <!-- Arka plan süslemesi (Opsiyonel) -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none opacity-40">
+            <div
+                class="absolute top-10 left-10 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob">
+            </div>
+            <div
+                class="absolute top-10 right-10 w-64 h-64 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000">
+            </div>
+            <div
+                class="absolute -bottom-32 left-20 w-64 h-64 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000">
+            </div>
+        </div>
+
+        <div class="w-full max-w-lg relative">
+
+            <!-- Tebrikler Mesajı (Başlangıçta Gizli) -->
+            <div id="messageBox"
+                class="hidden bg-white p-8 rounded-2xl shadow-2xl text-center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full z-50">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-check text-4xl text-green-500"></i>
                 </div>
+                <h2 class="text-2xl font-bold text-green-800 mb-2">Harika İş! 🎉</h2>
+                <p class="text-gray-600 mb-6">Bugünkü çalışma hedefini başarıyla tamamladın.</p>
+                <button onclick="location.reload()"
+                    class="w-full py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-800 transition">
+                    Tekrar Çalış
+                </button>
+            </div>
 
-                <!-- Cevap/Aksiyon Butonları -->
-                <div id="actionButtons" class="space-y-3 sm:space-y-0 sm:flex sm:space-x-4 mt-6">
-                    <button id="showAnswer" class="flex-1 px-4 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-700 transition duration-150">
-                        Cevabı Göster
-                    </button>
-                    <!-- Bu butonlar, cevap göründükten sonra ortaya çıkacak -->
-                    <button id="markEasy" class="flex-1 px-4 py-3 bg-green-500 text-white font-semibold rounded-xl shadow-md hover:bg-green-600 transition duration-150 hidden">
-                        Kolaydı (İyi biliyorum)
-                    </button>
-                    <button id="markHard" class="flex-1 px-4 py-3 bg-red-500 text-white font-semibold rounded-xl shadow-md hover:bg-red-600 transition duration-150 hidden">
-                        Zor/Unuttum (Tekrar Et)
-                    </button>
+            <!-- Kart Konteyner -->
+            <div class="flip-card-container h-[420px] w-full cursor-pointer" id="cardContainer">
+
+                <!-- JS: 'is-flipped' class'ı buraya eklenecek -->
+                <div class="flip-card-inner" id="flipCardInner">
+
+                    <!-- ÖN YÜZ -->
+                    <div
+                        class="flip-card-front bg-white flex flex-col justify-between items-center p-8 border-t-[6px] border-sky-700">
+                        <div class="w-full flex justify-between items-center border-b border-gray-100 pb-4">
+                            <span class="text-xs font-bold tracking-wider text-blue-900 uppercase">Soru Kartı</span>
+                            <span class="px-3 py-1 bg-yellow-400 text-gray-100 text-xs font-bold rounded-full"
+                                id="cardCategory">Konu</span>
+                        </div>
+
+                        <div class="flex-grow flex items-center justify-center py-4">
+                            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 text-center leading-tight"
+                                id="cardQuestion">
+                                Yükleniyor...
+                            </h2>
+                        </div>
+
+                        <div class="text-center text-gray-600 text-sm flex flex-col items-center gap-2">
+                            <i class="fa-regular fa-hand-pointer animate-bounce"></i>
+                            Cevabı görmek için dokun
+                        </div>
+                    </div>
+
+                    <!-- ARKA YÜZ -->
+                    <div
+                        class="flip-card-back flex flex-col justify-center items-center p-8 text-white relative overflow-hidden">
+                        <!-- Arka plan deseni -->
+                        <div class="absolute top-0 right-0 p-4 opacity-10">
+                            <i class="fa-solid fa-lightbulb text-9xl"></i>
+                        </div>
+
+                        <p class="text-xs font-bold text-indigo-200 tracking-[0.2em] uppercase mb-6 relative z-10">DOĞRU
+                            CEVAP</p>
+
+                        <div class="text-2xl md:text-3xl font-bold text-center relative z-10 leading-snug"
+                            id="cardAnswer">
+                            ...
+                        </div>
+                    </div>
+
                 </div>
             </div>
+
+            <!-- Butonlar (Cevap Verildikten Sonra Çıkar) -->
+            <div id="actionButtons"
+                class="mt-8 flex justify-center gap-3 invisible opacity-0 transition-all duration-500 transform translate-y-4">
+                <button id="markEasy"
+                    class="flex-1 py-3 bg-slate-700 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-emerald-200 flex flex-col items-center justify-center gap-1">
+                    <span class="text-lg">Kolay</span>
+                    <span class="text-[10px] opacity-80 font-normal">Uzun süre sonra</span>
+                </button>
+
+                <button id="markMedium"
+                    class="flex-1 py-3 bg-gray-800 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg hover:shadow-amber-200 flex flex-col items-center justify-center gap-1">
+                    <span class="text-lg">Orta</span>
+                    <span class="text-[10px] opacity-80 font-normal">Yakın Zamanda</span>
+                </button>
+
+                <button id="markHard"
+                    class="flex-1 py-3 bg-zinc-900 hover:bg-rose-600 text-white font-bold rounded-xl shadow-lg hover:shadow-rose-200 flex flex-col items-center justify-center gap-1">
+                    <span class="text-lg">Zor</span>
+                    <span class="text-[10px] opacity-80 font-normal">Şimdi Tekrar</span>
+                </button>
+            </div>
+
         </div>
     </main>
 
-    <!-- JavaScript Dosyası -->
-    <script type="text/javascript" src="app.js"></script>
+    <script src="app.js"></script>
 </body>
+
 </html>

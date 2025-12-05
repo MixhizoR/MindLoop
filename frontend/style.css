@@ -1,82 +1,118 @@
-/*
- * =================================================================
- * MİNDLOOP TEMEL STİL DOSYASI - ESTETİK GELİŞTİRME
- * Bu dosya, font yükleme kurallarını en üstte tutar ve Tailwind CSS 
- * sınıflarını desteklemek için özel estetik geliştirmeler içerir.
- * =================================================================
- */
-
-/* 1. FONT YÜKLEME KURALI (@import, MUTLAKA TÜM KURALLARDAN ÖNCE GELMELİDİR) */
+/* 1. FONT VE TEMEL AYARLAR */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-/* Tüm elementler için varsayılan fontu ayarla */
 body {
     font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 0;
 }
 
-/* 2. ANA YAPILANDIRMA (Layout) */
-
-/* Uygulamanın tam ekran yüksekliğini kaplaması ve esnek dikey düzeni için */
 .app-container {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-/* 3. ESTETİK GELİŞTİRMELER VE MİCRO-ANİMASYONLAR */
+/* 2. FLIP CARD (DÖNME) MEKANİĞİ - FİNAL DÜZELTME */
 
-/* Global Geçişler: Daha yumuşak kullanıcı deneyimi için */
-button, a, #learningCard {
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Hızı biraz yavaşlatıp yumuşak bir eğri ekle */
+/* Sahne */
+.flip-card-container {
+    perspective: 5000px;
+    /* Değeri 5000px yaparak "devleşme" etkisini yok ettik */
+    transform: translateZ(0);
+    /* Tarayıcıyı 3D modunda kilitli tutar */
 }
 
-/* Öğrenme Kartı Stili (learningCard) */
-#learningCard {
-    /* Daha yumuşak, modern bir "derinlik" hissi veren gölge */
-    box-shadow: 
+/* Dönen Gövde */
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Daha tok bir yaylanma efekti */
+    transform-style: preserve-3d;
+    transform-origin: center center;
+}
+
+/* JS Tarafından Eklenecek Sınıf (Döndürme Tetikleyicisi) */
+.flip-card-inner.is-flipped {
+    /* rotateY(180deg) yanına scale(1) ekleyerek boyutu kilitledik */
+    transform: rotateY(180deg) scale(1);
+}
+
+/* Ön ve Arka Yüz Ortak Ayarları */
+.flip-card-front,
+.flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+
+    /* Titremeyi ve büyüme hatasını önleyen kritik satırlar */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+
+    box-sizing: border-box;
+
+    /* GÖRSEL TASARIM */
+    box-shadow:
         0 4px 6px -1px rgba(0, 0, 0, 0.1),
-        0 2px 4px -2px rgba(0, 0, 0, 0.06),
-        0 10px 15px -3px rgba(79, 70, 229, 0.1); /* Ana renk (indigo) ile hafif renkli gölge */
-    border-radius: 1.25rem; /* rounded-xl'dan biraz daha yuvarlak */
-    border: 1px solid rgba(255, 255, 255, 0.5); /* İçerik rengine uyum sağlaması için ince bir kenarlık */
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+    border-radius: 1.25rem;
+    border: 1px solid rgba(229, 231, 235, 1);
+
+    background-color: white;
+    /* Ön yüzün arka plan rengi garanti olsun */
 }
 
-/* Kartın üzerine gelindiğinde Yükselme ve Geri Bildirim Efekti */
-#learningCard:hover {
-    transform: translateY(-6px) scale(1.01); /* Daha belirgin yükselme */
-    box-shadow: 
-        0 20px 30px rgba(0, 0, 0, 0.15),
-        0 10px 20px rgba(79, 70, 229, 0.2); /* Gölgeyi derinleştir ve rengi güçlendir */
+/* Arka Yüzün Özel Duruşu */
+.flip-card-back {
+    /* translateZ(1px) ekleyerek arka yüzün öne karışmasını engelledik */
+    transform: rotateY(180deg) translateZ(1px);
+    background-color: #edf55d;
+    /* Açık mavi ton */
+    border-top: 6px solid transparent;
+    z-index: 1;
+    /* Arka yüzü katman olarak ayır */
 }
 
-/* Buton Etkileşimleri */
+/* Ön yüzün z-index ayarı */
+.flip-card-front {
+    z-index: 2;
+}
+
+/* 3. HOVER VE ESTETİK EFEKTLER */
+
+/* Kartın üzerine gelince (Hover) - Neon Parlama Efekti */
+.flip-card-container:hover .flip-card-front,
+.flip-card-container:hover .flip-card-back {
+    box-shadow:
+        0 0 30px rgba(16, 54, 135, 0.944),
+        0 0 60px rgba(33, 159, 205, 0.4);
+}
+
+/* 4. DİĞER ELEMENTLER */
+
+/* Butonlar - Kutusu */
+#actionButtons {
+    position: relative;
+    /* Katman ayarı için gerekli */
+    z-index: 50;
+    /* Kartın (z-index:1 veya 2) hep üstünde kalmasını sağlar */
+    margin-top: 1rem;
+    /* Biraz boşluk bırakalım */
+}
+
+/* Butonların Kendisi */
 #actionButtons button {
-    transform: scale(1);
-    letter-spacing: 0.5px; /* Metne hafif boşluk ekle */
+    transition: all 0.2s;
 }
 
 #actionButtons button:active {
-    transform: scale(0.98); /* Tıklama anında küçültme */
-    filter: brightness(0.9); 
-}
-
-/* Mesaj Kutusu Görünümü ve Animasyonu */
-#messageBox {
-    /* Animasyonu koru */
-    animation: fadeInDown 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
-    /* Mesaj kutusuna hafif opaklıkta ve yumuşak bir gölge ekle */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-30px); /* Daha belirgin bir başlangıç noktası */
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    transform: scale(0.98);
+    filter: brightness(0.9);
 }
