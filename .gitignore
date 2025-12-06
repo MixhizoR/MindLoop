@@ -1,3 +1,4 @@
+.env
 .vscode/
 # Python gereksizleri
 __pycache__/
