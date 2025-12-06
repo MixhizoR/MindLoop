@@ -1,5 +1,8 @@
 pdfplumber
 google-generativeai
-fastapi 
-uvicorn 
+fastapi
+uvicorn
 python-multipart
+sqlalchemy
+aiosqlite
+pydantic
