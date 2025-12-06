@@ -1,2 +1,0 @@
-pip install pdfplumber
-pip install -q -U google-generativeai
