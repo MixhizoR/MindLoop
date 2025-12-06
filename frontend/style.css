@@ -1,4 +1,3 @@
-/* 1. FONT VE TEMEL AYARLAR */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
 body {
@@ -13,14 +12,12 @@ body {
     flex-direction: column;
 }
 
-/* 2. FLIP CARD (DÖNME) MEKANİĞİ - FİNAL DÜZELTME */
-
-/* Sahne */
+/* Sahne Ayarı (Perspektif) */
 .flip-card-container {
     perspective: 5000px;
-    /* Değeri 5000px yaparak "devleşme" etkisini yok ettik */
+    /* Derinlik algısı */
     transform: translateZ(0);
-    /* Tarayıcıyı 3D modunda kilitli tutar */
+    /* 3D Render optimizasyonu */
 }
 
 /* Dönen Gövde */
@@ -30,18 +27,16 @@ body {
     height: 100%;
     text-align: center;
     transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    /* Daha tok bir yaylanma efekti */
     transform-style: preserve-3d;
     transform-origin: center center;
 }
 
-/* JS Tarafından Eklenecek Sınıf (Döndürme Tetikleyicisi) */
+/* Döndürme Sınıfı (JS ile eklenir) */
 .flip-card-inner.is-flipped {
-    /* rotateY(180deg) yanına scale(1) ekleyerek boyutu kilitledik */
     transform: rotateY(180deg) scale(1);
 }
 
-/* Ön ve Arka Yüz Ortak Ayarları */
+/* Ön ve Arka Yüz Ortak Özellikleri */
 .flip-card-front,
 .flip-card-back {
     position: absolute;
@@ -50,44 +45,37 @@ body {
     top: 0;
     left: 0;
 
-    /* Titremeyi ve büyüme hatasını önleyen kritik satırlar */
+    /* Titremeyi önleyen ayarlar */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     transform: translateZ(0);
 
     box-sizing: border-box;
-
-    /* GÖRSEL TASARIM */
     box-shadow:
         0 4px 6px -1px rgba(0, 0, 0, 0.1),
         0 2px 4px -1px rgba(0, 0, 0, 0.06);
 
     border-radius: 1.25rem;
     border: 1px solid rgba(229, 231, 235, 1);
-
     background-color: white;
-    /* Ön yüzün arka plan rengi garanti olsun */
 }
 
-/* Arka Yüzün Özel Duruşu */
-.flip-card-back {
-    /* translateZ(1px) ekleyerek arka yüzün öne karışmasını engelledik */
-    transform: rotateY(180deg) translateZ(1px);
-    background-color: #edf55d;
-    /* Açık mavi ton */
-    border-top: 6px solid transparent;
-    z-index: 1;
-    /* Arka yüzü katman olarak ayır */
-}
-
-/* Ön yüzün z-index ayarı */
+/* Ön Yüz (Soru) */
 .flip-card-front {
     z-index: 2;
 }
 
-/* 3. HOVER VE ESTETİK EFEKTLER */
+/* Arka Yüz (Cevap) */
+.flip-card-back {
+    transform: rotateY(180deg) translateZ(1px);
+    background-color: #edf55d;
+    /* Sarı ton */
+    border-top: 6px solid transparent;
+    z-index: 1;
+}
 
-/* Kartın üzerine gelince (Hover) - Neon Parlama Efekti */
+
+/* Kart Üzerine Gelince (Hover) - Neon Efekt */
 .flip-card-container:hover .flip-card-front,
 .flip-card-container:hover .flip-card-back {
     box-shadow:
@@ -95,19 +83,14 @@ body {
         0 0 60px rgba(33, 159, 205, 0.4);
 }
 
-/* 4. DİĞER ELEMENTLER */
-
-/* Butonlar - Kutusu */
+/* Aksiyon Butonları */
 #actionButtons {
     position: relative;
-    /* Katman ayarı için gerekli */
     z-index: 50;
-    /* Kartın (z-index:1 veya 2) hep üstünde kalmasını sağlar */
+    /* Kartın üzerinde kalmasını sağlar */
     margin-top: 1rem;
-    /* Biraz boşluk bırakalım */
 }
 
-/* Butonların Kendisi */
 #actionButtons button {
     transition: all 0.2s;
 }
@@ -115,4 +98,9 @@ body {
 #actionButtons button:active {
     transform: scale(0.98);
     filter: brightness(0.9);
+}
+
+/* Bildirim Kutusu Animasyonu */
+#toastNotification {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

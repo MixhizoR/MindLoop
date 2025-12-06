@@ -1,56 +1,45 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ==================================================
-    // 1. SAYFA KONTROLÜ (Hangi sayfadayız?)
+    // GLOBAL SELECTORS & PAGE CHECK
     // ==================================================
     const isStudyPage = document.getElementById('cardContainer');
     const isUploadPage = document.getElementById('uploadBtn');
 
     // ==================================================
-    // 2. ÇALIŞMA ALANI MANTIĞI (index.html)
+    // PART 1: STUDY PAGE LOGIC (index.html)
     // ==================================================
     if (isStudyPage) {
+        // DOM Elements
         const cardContainer = document.getElementById('cardContainer');
         const flipCardInner = document.getElementById('flipCardInner');
         const actionButtons = document.getElementById('actionButtons');
         const messageBox = document.getElementById('messageBox');
 
-        // İçerik alanları
+        // Content Elements
         const questionEl = document.getElementById('cardQuestion');
         const answerEl = document.getElementById('cardAnswer');
         const cardCategory = document.getElementById('cardCategory');
 
+        // State Variables
         let studyQueue = [];
         let currentIndex = 0;
         let isFlipped = false;
-
-        // Bildirim zamanlayıcısı (Hızlı geçişler için kontrol bizde)
         let toastTimeout;
 
-        // --- MOCK API: Verileri Çekme ---
+        // --- 1. INITIALIZE DATA ---
         function fetchDailyCards() {
-            console.log("📡 API İsteği Simülasyonu: Veriler hazırlanıyor...");
-
-            // 1. Önce hafızaya (LocalStorage) bakalım
+            // Check LocalStorage for real user data
             const storedData = localStorage.getItem('studyCards');
 
             if (storedData) {
-                // Varsa onları kullan
                 studyQueue = JSON.parse(storedData);
-                console.log("✅ Hafızadan Yüklendi:", studyQueue);
             } else {
-                // Yoksa (ilk açılışsa) varsayılan verileri yükle
-                const defaultData = [
-                    { id: 101, title: "Tarih", question: "İstanbul kaç yılında fethedildi?", answer: "1453" },
-                    { id: 102, title: "Yazılım", question: "HTML'in açılımı nedir?", answer: "HyperText Markup Language" },
-                    { id: 103, title: "Coğrafya", question: "Türkiye'nin en yüksek dağı?", answer: "Ağrı Dağı" }
-                ];
-                studyQueue = defaultData;
-                localStorage.setItem('studyCards', JSON.stringify(defaultData));
-                console.log("⚠️ Varsayılan veriler yüklendi.");
+                // Production Mode: Start empty if no data exists
+                studyQueue = [];
             }
 
-            // İlk kartı ekrana bas
+            // Render first card or finish screen
             if (studyQueue.length > 0) {
                 loadCard(0);
             } else {
@@ -58,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // --- KARTI EKRANA BASMA ---
+        // --- 2. RENDER CARD ---
         function loadCard(index) {
             if (index >= studyQueue.length) {
                 showFinishMessage();
@@ -67,22 +56,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = studyQueue[index];
 
-            // Kartı sıfırla (Ön yüzü çevir)
+            // Reset Card State
             flipCardInner.classList.remove('is-flipped');
             isFlipped = false;
-
-            // Butonları gizle
             actionButtons.classList.add('invisible', 'opacity-0');
 
-            // İçerikleri doldur
+            // Fill Content
             questionEl.textContent = data.question;
             answerEl.textContent = data.answer;
             if (cardCategory) cardCategory.textContent = data.title;
         }
 
-        // --- KART DÖNDÜRME ---
-        cardContainer.addEventListener('click', (e) => {
-            hideToast(); // YENİ: Karta tıklayınca varsa bildirimi hemen gizle
+        // --- 3. FLIP INTERACTION ---
+        cardContainer.addEventListener('click', () => {
+            hideToast(); // Clear existing toasts
 
             if (!isFlipped) {
                 flipCardInner.classList.add('is-flipped');
@@ -91,15 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // --- YENİ: EKRANDA BOŞ YERE TIKLAYINCA BİLDİRİMİ GİZLE ---
+        // Close toast when clicking outside
         document.body.addEventListener('click', (e) => {
-            // Eğer tıklanan yer buton veya kart değilse bildirimi kapat
             if (!e.target.closest('button') && !e.target.closest('.flip-card-container')) {
                 hideToast();
             }
         });
 
-        // --- YARDIMCI: BİLDİRİMİ GİZLEME ---
         function hideToast() {
             const toast = document.getElementById('toastNotification');
             if (toast) {
@@ -107,56 +92,52 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // --- CEVAP GÖNDERME (HIZLI BİLDİRİM MODU) ---
+        // --- 4. SUBMIT ANSWER (ALGORITHM & TOAST) ---
         window.submitAnswer = function (difficulty) {
             if (!isFlipped) return;
 
-            // Varsa eski zamanlayıcıyı iptal et (Üst üste binmesin)
             if (toastTimeout) clearTimeout(toastTimeout);
 
             const currentCard = studyQueue[currentIndex];
             const nextIndex = currentIndex + 1;
 
-            // 1. ALGORİTMA: Tarih Hesaplama
+            // --- SM-2 Simplified Algorithm ---
             const now = new Date();
             let nextReviewDate = new Date();
             let userMessage = "";
 
             if (difficulty === 'EASY') {
-                nextReviewDate.setDate(now.getDate() + 3); // 3 Gün Sonra
+                nextReviewDate.setDate(now.getDate() + 3); // +3 Days
                 userMessage = "Süper! 3 gün sonraya planlandı.";
             } else if (difficulty === 'MEDIUM') {
-                nextReviewDate.setDate(now.getDate() + 1); // 1 Gün Sonra
+                nextReviewDate.setDate(now.getDate() + 1); // +1 Day
                 userMessage = "Tamam, yarına planlandı.";
             } else {
-                // Zor: Tarih değişmez (Hemen tekrar)
+                // HARD: Review same day
                 userMessage = "Zorlandın mı? Yakında tekrar edelim.";
             }
 
-            // Tarihi Türkçe formatına çevir
             const dateStr = nextReviewDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
 
-            // 2. TOAST BİLDİRİMİNİ GÖSTER (Seri Mod)
+            // Show Toast Notification
             const toast = document.getElementById('toastNotification');
             if (toast) {
                 const toastText = document.getElementById('toastText');
                 toastText.innerHTML = `${userMessage} <span class="text-gray-400 text-xs ml-1">(${dateStr})</span>`;
 
-                // Önce gizle (resetle)
+                // Reset animation
                 toast.classList.add('opacity-0', 'translate-y-10');
-
-                // Çok kısa bir gecikmeyle (10ms) tekrar göster (Animasyonu tetikle)
                 setTimeout(() => {
                     toast.classList.remove('opacity-0', 'translate-y-10');
                 }, 10);
 
-                // 1.5 Saniye sonra otomatik gizle (Hızlı)
+                // Auto hide after 1.5s
                 toastTimeout = setTimeout(() => {
                     hideToast();
                 }, 1500);
             }
 
-            // 3. VERİTABANI GÜNCELLEME (LocalStorage)
+            // Update Storage
             let allCards = JSON.parse(localStorage.getItem('studyCards')) || [];
             const updatedCards = allCards.map(card => {
                 if (card.id === currentCard.id) {
@@ -166,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             localStorage.setItem('studyCards', JSON.stringify(updatedCards));
 
-            // 4. SONRAKİ KARTA GEÇİŞ
+            // Move to Next Card
             if (nextIndex >= studyQueue.length) {
                 showFinishMessage();
                 return;
@@ -174,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const nextCard = studyQueue[nextIndex];
 
-            // Hile: Kart terstayken yeni soruyu yükle
+            // Pre-load next question (invisible side)
             questionEl.textContent = nextCard.question;
             if (cardCategory) cardCategory.textContent = nextCard.title;
 
@@ -182,28 +163,28 @@ document.addEventListener('DOMContentLoaded', () => {
             actionButtons.classList.add('invisible', 'opacity-0');
             isFlipped = false;
 
-            // Animasyon süresi (1sn) kadar bekle, sonra cevabı değiştir
+            // Wait for flip animation
             setTimeout(() => {
                 currentIndex++;
                 answerEl.textContent = nextCard.answer;
             }, 1000);
         };
 
-        // --- BİTİŞ EKRANI ---
+        // --- 5. FINISH SCREEN ---
         function showFinishMessage() {
             document.getElementById('cardContainer').classList.add('hidden');
             actionButtons.classList.add('hidden');
             messageBox.classList.remove('hidden');
-            hideToast(); // Bitiş ekranında bildirim kalmasın
+            hideToast();
         }
 
-        // --- BUTON DİNLEYİCİLERİ ---
+        // Button Event Listeners
         document.getElementById('markEasy').addEventListener('click', (e) => { e.stopPropagation(); window.submitAnswer('EASY'); });
         document.getElementById('markMedium').addEventListener('click', (e) => { e.stopPropagation(); window.submitAnswer('MEDIUM'); });
         document.getElementById('markHard').addEventListener('click', (e) => { e.stopPropagation(); window.submitAnswer('HARD'); });
 
-        // --- FAVICON SİHİRBAZI ---
-        const imagePath = 'mindLoop.jpeg'; // Dosya adın neyse buraya yaz
+        // --- 6. FAVICON FIX (Square to Circle) ---
+        const imagePath = 'mindloop.jpeg';
         const link = document.querySelector("link[rel~='icon']");
         if (link) {
             const canvas = document.createElement('canvas');
@@ -218,12 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
-        // Başlat
+        // Initialize App
         fetchDailyCards();
     }
 
     // ==================================================
-    // 3. UPLOAD ALANI MANTIĞI (Gerçek JSON Dosya Okuma)
+    // PART 2: UPLOAD PAGE LOGIC (upload.html)
     // ==================================================
     if (isUploadPage) {
         const fileInput = document.getElementById('fileInput');
@@ -232,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileNameArea = document.getElementById('fileNameArea');
         const uploadStatus = document.getElementById('uploadStatus');
 
-        // Dosya Seçilince
+        // File Selection Handler
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 const file = e.target.files[0];
@@ -244,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Yükle Butonuna Basınca
+        // Upload Button Handler
         uploadBtn.addEventListener('click', () => {
             const file = fileInput.files[0];
             if (!file) return;
@@ -253,30 +234,25 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Okunuyor...`;
             uploadBtn.disabled = true;
 
-            // --- FİLE READER (DOSYA OKUYUCU) ---
             const reader = new FileReader();
 
             reader.onload = function (e) {
                 try {
-                    // 1. İçeriği al
+                    // Parse JSON
                     const fileContent = e.target.result;
-
-                    // 2. JSON'a çevir
                     const newQuestions = JSON.parse(fileContent);
 
-                    // 3. Kontrol et (Liste mi?)
+                    // Validation
                     if (!Array.isArray(newQuestions)) {
-                        throw new Error("Dosya formatı hatalı! Köşeli parantez [...] ile başlamalı.");
+                        throw new Error("Dosya formatı hatalı! JSON bir liste ([...]) olmalı.");
                     }
 
-                    // 4. Eskileri al + Yenileri ekle
+                    // Save to Storage
                     const existingData = JSON.parse(localStorage.getItem('studyCards')) || [];
                     const updatedData = existingData.concat(newQuestions);
-
-                    // 5. Kaydet
                     localStorage.setItem('studyCards', JSON.stringify(updatedData));
 
-                    // 6. Başarılı Mesajı
+                    // Success Feedback
                     setTimeout(() => {
                         uploadBtn.innerHTML = originalBtnText;
                         uploadBtn.disabled = false;
@@ -289,19 +265,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         fileNameArea.classList.add('hidden');
                         uploadBtn.disabled = true;
                         uploadBtn.classList.add('opacity-50');
-
-                        console.log("✅ Yüklenen Sorular:", newQuestions);
                     }, 1000);
 
                 } catch (error) {
                     uploadBtn.innerHTML = originalBtnText;
                     uploadBtn.disabled = false;
                     alert("Hata: " + error.message);
-                    console.error("JSON Hatası:", error);
+                    console.error("JSON Error:", error);
                 }
             };
 
-            // Okumayı başlat
             reader.readAsText(file);
         });
     }
