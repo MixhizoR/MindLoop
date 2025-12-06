@@ -1,0 +1,14 @@
+[
+    {
+        "id": 201,
+        "title": "Biyoloji",
+        "question": "Mitoz bölünme kaç evreden oluşur?",
+        "answer": "4 Evre: Profaz, Metafaz, Anafaz, Telofaz"
+    },
+    {
+        "id": 202,
+        "title": "Kimya",
+        "question": "Suyun kimyasal formülü nedir?",
+        "answer": "H2O"
+    }
+]
