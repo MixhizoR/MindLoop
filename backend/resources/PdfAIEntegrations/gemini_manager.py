@@ -1,12 +1,12 @@
+import os
 import google.generativeai as genai
+from dotenv import load_dotenv
+
+
 
 def get_GOOGLE_API_KEY():
-    try:
-        with open("GEMINI_TOKEN.env", "r", encoding="utf-8") as dosya:
-            icerik = dosya.read()
-            return icerik
-    except FileNotFoundError:
-            print("Token Dosya bulunamadı!")
+    load_dotenv()
+    return os.getenv('GEMINI_TOKEN')
 
 def send_prompt(text):
     genai.configure(api_key=get_GOOGLE_API_KEY())
