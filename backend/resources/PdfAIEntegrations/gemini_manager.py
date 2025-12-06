@@ -2,7 +2,7 @@ import google.generativeai as genai
 
 def get_GOOGLE_API_KEY():
     try:
-        with open("GEMINI_TOKEN.txt", "r", encoding="utf-8") as dosya:
+        with open("GEMINI_TOKEN.env", "r", encoding="utf-8") as dosya:
             icerik = dosya.read()
             return icerik
     except FileNotFoundError:
