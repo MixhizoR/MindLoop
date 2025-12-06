@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9fafb;
+}
+
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sahne Ayarı (Perspektif) */
+.flip-card-container {
+    perspective: 5000px;
+    /* Derinlik algısı */
+    transform: translateZ(0);
+    /* 3D Render optimizasyonu */
+}
+
+/* Dönen Gövde */
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-style: preserve-3d;
+    transform-origin: center center;
+}
+
+/* Döndürme Sınıfı (JS ile eklenir) */
+.flip-card-inner.is-flipped {
+    transform: rotateY(180deg) scale(1);
+}
+
+/* Ön ve Arka Yüz Ortak Özellikleri */
+.flip-card-front,
+.flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+
+    /* Titremeyi önleyen ayarlar */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+
+    box-sizing: border-box;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+    border-radius: 1.25rem;
+    border: 1px solid rgba(229, 231, 235, 1);
+    background-color: white;
+}
+
+/* Ön Yüz (Soru) */
+.flip-card-front {
+    z-index: 2;
+}
+
+/* Arka Yüz (Cevap) */
+.flip-card-back {
+    transform: rotateY(180deg) translateZ(1px);
+    background-color: #edf55d;
+    /* Sarı ton */
+    border-top: 6px solid transparent;
+    z-index: 1;
+}
+
+
+/* Kart Üzerine Gelince (Hover) - Neon Efekt */
+.flip-card-container:hover .flip-card-front,
+.flip-card-container:hover .flip-card-back {
+    box-shadow:
+        0 0 30px rgba(16, 54, 135, 0.944),
+        0 0 60px rgba(33, 159, 205, 0.4);
+}
+
+/* Aksiyon Butonları */
+#actionButtons {
+    position: relative;
+    z-index: 50;
+    /* Kartın üzerinde kalmasını sağlar */
+    margin-top: 1rem;
+}
+
+#actionButtons button {
+    transition: all 0.2s;
+}
+
+#actionButtons button:active {
+    transform: scale(0.98);
+    filter: brightness(0.9);
+}
+
+/* Bildirim Kutusu Animasyonu */
+#toastNotification {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

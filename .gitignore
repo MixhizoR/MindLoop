@@ -1,1 +1,14 @@
 .env
+.vscode/
+# Python gereksizleri
+__pycache__/
+*.pyc
+backend/venv/
+backend/.env
+*.db
+
+# Frontend/Sistem gereksizleri
+.DS_Store
+
+.agent/
+.dist
