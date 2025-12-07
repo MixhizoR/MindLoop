@@ -105,3 +105,68 @@ body {
 #toastNotification {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* =========================================== */
+/* EK: ARKA PLAN BLOB VE TAILWIND UYUM STİLLERİ */
+/* =========================================== */
+
+/* HTML'de tanımlı blob animasyonu için keyframes'ler */
+@keyframes blob {
+
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(30px, -50px) scale(1.1);
+    }
+
+    66% {
+        transform: translate(-20px, 20px) scale(0.9);
+    }
+}
+
+.animate-blob {
+    animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+    animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+    animation-delay: 4s;
+}
+
+/* Cevap Kartı Rengi Düzeltmesi */
+/* Not: HTML'de .flip-card-back için bir Tailwind sınıfı yok, 
+   bu nedenle önceki cevabımdaki gibi özel bir arka plan kullanabilirsiniz. 
+   Ancak sizin CSS'inizde '#edf55d' (sarı ton) kullanılmış. 
+   Eğer HTML'de görünmesini istediğiniz koyu arka plan (Tailwind bg-gray-900 benzeri) 
+   tercih ediyorsanız, aşağıdaki stili kullanın: */
+
+/*
+.flip-card-back {
+    background-color: #1f2937 !important; 
+    color: white !important; 
+    border-top: none !important;
+}
+*/
+
+/* VEYA Sizin CSS'inizdeki sarı tonu korumak için: */
+.flip-card-back {
+    color: #333 !important;
+    /* Sarı zemin üzerinde siyah metin için */
+}
+
+/* Butonların Geçişleri İçin Ek CSS */
+/* actionButtons div'ine JS'ten eklenen görünürlük geçişleri için */
+#actionButtons {
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.320, 1) !important;
+}
+
+/* Toast Bildiriminin Hızlı Geçişi İçin */
+#toastNotification {
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
