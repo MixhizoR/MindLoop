@@ -7,3 +7,4 @@ backend/.env
 .DS_Store
 .agent/
 .dist
+backend/learning.db.bac
