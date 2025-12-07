@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 # Import models to ensure they are registered with Base.metadata
 from .models import Card
@@ -23,6 +24,14 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="MindLoop API", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(pdf_upload_endpoint.router)
 app.include_router(study_endpoint.router)
