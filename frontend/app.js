@@ -27,23 +27,45 @@ document.addEventListener('DOMContentLoaded', () => {
         let isFlipped = false;
         let toastTimeout;
 
-        // --- 1. INITIALIZE DATA ---
-        function fetchDailyCards() {
-            // Check LocalStorage for real user data
-            const storedData = localStorage.getItem('studyCards');
+        // --- 1. INITIALIZE DATA (BACKEND BAĞLANTISI) ---
+        async function fetchDailyCards() {
+            try {
+                console.log("⏳ Backend'e bağlanılıyor...");
 
-            if (storedData) {
-                studyQueue = JSON.parse(storedData);
-            } else {
-                // Production Mode: Start empty if no data exists
-                studyQueue = [];
-            }
+                // Backend'e istek atıyoruz (GET isteği)
+                // NOT: Backend'in 8000 portunda çalıştığından emin ol
+                const response = await fetch('http://127.0.0.1:8000/api/study-daily');
 
-            // Render first card or finish screen
-            if (studyQueue.length > 0) {
-                loadCard(0);
-            } else {
-                showFinishMessage();
+                if (!response.ok) {
+                    throw new Error(`HTTP hatası! Durum: ${response.status}`);
+                }
+
+                // Gelen JSON verisini al
+                const data = await response.json();
+
+                // DoD 1: Konsola yazdır
+                console.log("✅ Backend'den gelen kart listesi:", data);
+
+                // Veriyi değişkene ata
+                studyQueue = data.data || [];
+
+                // Kartları başlat veya bitiş ekranını göster
+                if (studyQueue && studyQueue.length > 0) {
+                    loadCard(0); // DoD 2: İlk kartı ekrana bas
+                } else {
+                    console.log("Bugün çalışılacak kart yok veya liste boş.");
+                    showFinishMessage();
+                }
+
+            } catch (error) {
+                console.error("❌ Kartlar çekilemedi:", error);
+
+                // Hata durumunda kullanıcıya bilgi ver
+                const questionArea = document.getElementById('cardQuestion');
+                const answerArea = document.getElementById('cardAnswer');
+
+                if (questionArea) questionArea.textContent = "Bağlantı Hatası!";
+                if (answerArea) answerArea.textContent = "Backend açık mı? (127.0.0.1:8000)";
             }
         }
 
