@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from sqlalchemy import String, Text, Integer, Date
+from sqlalchemy import String, Text, Integer, Date, Float
 from sqlalchemy.orm import Mapped, mapped_column
 from .database import Base
 
@@ -13,4 +13,6 @@ class Card(Base):
     source_file: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     next_review_date: Mapped[Optional[date]] = mapped_column(Date, default=date.today)
     interval: Mapped[int] = mapped_column(Integer, default=1)
+    repetitions: Mapped[int] = mapped_column(Integer, default=0)
+    easiness_factor: Mapped[float] = mapped_column(Float, default=2.5)
     status: Mapped[str] = mapped_column(String, default="new")

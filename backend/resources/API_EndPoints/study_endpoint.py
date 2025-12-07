@@ -81,22 +81,50 @@ async def submit_answer(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
     
-    # Calculate new interval
-    current_interval = card.interval if card.interval is not None else 1
-    
+    # SM-2 Algorithm Implementation
+    # Mapping inputs to Quality (q):
+    # Hard: Recall failed (q=1) -> reset reps, interval=1
+    # Medium: Hesitant recall (q=3) -> pass
+    # Easy: Perfect recall (q=5) -> pass
+
+    q = 0
     if answer.rating == "hard":
-        new_interval = 1
+        q = 1
     elif answer.rating == "medium":
-        new_interval = int(current_interval * 1.5)
+        q = 3
     elif answer.rating == "easy":
-        new_interval = current_interval * 2
+        q = 5
+    
+    # Current state
+    reps = card.repetitions
+    ef = card.easiness_factor
+    interval = card.interval if card.interval is not None else 1
+    
+    if q < 3:
+        # Failed
+        reps = 0
+        interval = 1
     else:
-        new_interval = 1 # Fallback
+        # Passed
+        reps += 1
+        if reps == 1:
+            interval = 1
+        elif reps == 2:
+            interval = 6
+        else:
+            interval = int(interval * ef)
         
-    next_review = date.today() + timedelta(days=new_interval)
+        # Update EF
+        ef = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+        if ef < 1.3:
+            ef = 1.3
+            
+    next_review = date.today() + timedelta(days=interval)
     
     # Update card
-    card.interval = new_interval
+    card.interval = interval
+    card.repetitions = reps
+    card.easiness_factor = ef
     card.next_review_date = next_review
     # Update status to indicate it has been reviewed at least once if it was 'new'
     if card.status == 'new':
@@ -106,7 +134,7 @@ async def submit_answer(
     
     return {
         "status": "success",
-        "new_interval": new_interval,
+        "new_interval": interval,
         "next_review": next_review.isoformat(),
         "message": "Kart güncellendi."
     }
