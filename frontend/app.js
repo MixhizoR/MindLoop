@@ -19,6 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const actionButtons = document.getElementById('actionButtons');
         const messageBox = document.getElementById('messageBox');
 
+        // --- KRİTİK EKSİK TANIMLAMALAR EKLENDİ ---
+        const markEasyBtn = document.getElementById('markEasy');
+        const markMediumBtn = document.getElementById('markMedium');
+        const markHardBtn = document.getElementById('markHard');
+        // -----------------------------------------
+
         // Content Elements
         const questionEl = document.getElementById('cardQuestion');
         const answerEl = document.getElementById('cardAnswer');
@@ -100,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fill Content (Backend formatına göre: 'front' ve 'back' olmalı)
             // NOT: Sizin kodunuzda 'question' ve 'answer' kullanılmış. API'deki 'front'/'back' ile eşleştiriyoruz.
             questionEl.textContent = data.front; // API'den gelen 'front'
-            answerEl.textContent = data.back;   // API'den gelen 'back'
+            answerEl.textContent = data.back;   // API'den gelen 'back'
 
             // Konu için 'source_file' kullanılabilir, eğer API'de bu alan varsa
             if (cardCategory) cardCategory.textContent = data.source_file ? data.source_file.replace('.pdf', '') : 'Genel';
@@ -124,35 +130,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- 4. SUBMIT ANSWER (API İLE İLERLEME KAYDI) ---
         window.submitAnswer = async function (difficulty) {
-            if (!isFlipped) return;
+            //if (!isFlipped) return; // KRİTİK KONTROL TEST AMAÇLI YORUM SATIRI BIRAKILDI
 
-            if (toastTimeout) clearTimeout(toastTimeout);
-
+            // Mevcut kartı al ve sonraki index'i belirle
             const currentCard = studyQueue[currentIndex];
             const nextIndex = currentIndex + 1;
 
-            // --- API İsteği: /api/submit-answer ---
+            // --- KRİTİK KORUMA KONTROLÜ (YENİ EKLENTİ) ---
+            if (!currentCard || !currentCard.id) {
+                console.error("❌ KRİTİK HATA: Mevcut kart (currentCard) bilgisi bulunamadı veya ID'si tanımsız. Index:", currentIndex);
+                // Eğer kart tanımsızsa, çökmeden dur.
+                return;
+            }
+            // ---------------------------------------------
+
+
+            // --- HATA TESPİTİ LOGLARI ---
+            console.log("➡️ ADIM 1: submitAnswer Başladı.");
+            console.log("➡️ ADIM 1.1: Kart ID:", currentCard.id, "Rating:", difficulty);
+            // -----------------------------
+
+            // --- 1. DOD: Butona basınca Network tab'ında backend isteği (200 OK) görülüyor. ---
             try {
+                console.log("➡️ ADIM 2: Fetch isteği başlıyor...");
+
                 const response = await fetch(`${BACKEND_URL}/api/submit-answer`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         card_id: currentCard.id,
-                        rating: difficulty.toLowerCase() // API sadece "easy", "medium", "hard" kabul ediyor.
+                        rating: difficulty.toLowerCase() // "EASY" -> "easy"
                     })
                 });
 
+                console.log("➡️ ADIM 3: Fetch tamamlandı, Durum:", response.status);
+
+                // Hata kontrolü (Response OK değilse hata fırlatır)
                 if (!response.ok) {
                     throw new Error(`API Hatası! Durum: ${response.status}`);
                 }
 
                 const result = await response.json();
 
-                // --- Başarılı Cevap Durumu ---
+                // --- TOAST GÖSTERME KISMI ---
+                if (toastTimeout) clearTimeout(toastTimeout);
 
-                // Toast Mesajı hazırlama
                 let userMessage = "";
                 if (difficulty === 'EASY') userMessage = "Süper! Çok iyi hatırladın.";
                 else if (difficulty === 'MEDIUM') userMessage = "Tamam, tekrar yakında yapılacak.";
@@ -160,49 +182,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const dateStr = new Date(result.next_review).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
 
-                // Show Toast Notification
                 toastText.innerHTML = `${userMessage} <span class="text-gray-400 text-xs ml-1">(Yeni tarih: ${dateStr})</span>`;
+                toastNotification.classList.remove('opacity-0', 'translate-y-10');
+                toastNotification.classList.add('opacity-100', 'translate-y-0');
 
-                // Reset animation and show
-                toastNotification.classList.add('opacity-0', 'translate-y-10');
-                setTimeout(() => {
-                    toastNotification.classList.remove('opacity-0', 'translate-y-10');
-                }, 10);
-
-                // Auto hide after 3s
-                toastTimeout = setTimeout(() => {
-                    hideToast();
-                }, 3000);
+                toastTimeout = setTimeout(() => { hideToast(); }, 3000);
+                // -----------------------------
 
             } catch (error) {
-                console.error("❌ Cevap gönderilemedi:", error);
+                console.error("❌ CEVAP GÖNDERİLEMEDİ VEYA FETCH HATASI:", error);
 
                 // Hata Toast'u göster
-                toastText.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-400"></i> Hata: Cevap kaydedilemedi.`;
+                if (toastTimeout) clearTimeout(toastTimeout);
+                toastText.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-400"></i> Hata: Cevap kaydedilemedi. Konsolu kontrol edin.`;
                 toastNotification.classList.remove('opacity-0', 'translate-y-10');
+                toastNotification.classList.add('opacity-100', 'translate-y-0');
                 toastTimeout = setTimeout(() => { hideToast(); }, 5000);
             }
 
-            // --- Sonraki Karta Geçiş ---
-
-            // Sonraki kart yoksa bitir
+            // --- 3. DOD: Liste bitince çalışma sonlanıyor. ---
             if (nextIndex >= studyQueue.length) {
-                setTimeout(showFinishMessage, 1500); // Toast'un görünmesi için kısa bir gecikme
+                setTimeout(showFinishMessage, 800); // Bitiş mesajını göster
                 return;
             }
 
-            // Kartı çevirme durumunu sıfırla
+            // --- 2. DOD: İstek başarılıysa ekrana bir sonraki kart geliyor. ---
+            // Kartı sıfırla ve yeni kartı yükle
             flipCardInner.classList.remove('is-flipped');
             actionButtons.classList.add('invisible', 'opacity-0');
             isFlipped = false;
 
-            // Yeni kartı yükle (animasyon bittikten sonra)
             setTimeout(() => {
                 currentIndex++;
-                loadCard(currentIndex);
-            }, 800); // Flip animasyon süresine yakın bir gecikme
+                loadCard(currentIndex); // Yeni kartı render et
+            }, 800);
         };
-
         // --- 5. FINISH SCREEN ---
         function showFinishMessage() {
             document.getElementById('cardContainer').classList.add('hidden');
@@ -211,10 +225,29 @@ document.addEventListener('DOMContentLoaded', () => {
             hideToast();
         }
 
-        // Button Event Listeners
-        document.getElementById('markEasy').addEventListener('click', (e) => { e.stopPropagation(); window.submitAnswer('EASY'); });
-        document.getElementById('markMedium').addEventListener('click', (e) => { e.stopPropagation(); window.submitAnswer('MEDIUM'); });
-        document.getElementById('markHard').addEventListener('click', (e) => { e.stopPropagation(); window.submitAnswer('HARD'); });
+        // --- Button Event Listeners (Yeni Tanımlanan Const Değişkenlerini Kullanıyor) ---
+        // Bu yapı, elementleri en başta bulmayı dener ve daha güvenilirdir.
+
+        if (markEasyBtn) {
+            markEasyBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.submitAnswer('EASY');
+            });
+        }
+        if (markMediumBtn) {
+            markMediumBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.submitAnswer('MEDIUM');
+            });
+        }
+        if (markHardBtn) {
+            markHardBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.submitAnswer('HARD');
+            });
+        }
+        // ---------------------------------------------------------------------------------
+
 
         // --- 6. FAVICON FIX ---
         // Bu bölüm API etkileşimini etkilemediği için orijinal haliyle bırakılmıştır.
@@ -245,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isUploadPage) {
         // NOT: Yükleme mantığınız şu anda dosyanın içeriğini okuyup
         // yerel depolamaya (localStorage) kaydetmektedir.
-        // API Sözleşmenize göre burası 'POST /api/upload' endpoint'ine
+        // API Sözleşmesine göre burası 'POST /api/upload' endpoint'ine
         // bir PDF dosyası göndermelidir.
 
         const fileInput = document.getElementById('fileInput');

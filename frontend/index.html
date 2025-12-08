@@ -6,10 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mikro-Öğrenme: Çalışma Ekranı</title>
 
-    <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="mindloop.jpeg">
 
-    <!-- Styles -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -17,7 +15,6 @@
 
 <body class="bg-gray-50 app-container">
 
-    <!-- Header -->
     <header class="bg-white shadow-sm border-b border-gray-100 z-50">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold text-blue-900 flex items-center gap-2">
@@ -34,10 +31,8 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="flex-grow flex flex-col items-center justify-center p-4 overflow-hidden relative">
 
-        <!-- Background Effects -->
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none opacity-40">
             <div
                 class="absolute top-10 left-10 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl animate-blob">
@@ -52,7 +47,6 @@
 
         <div class="w-full max-w-lg relative">
 
-            <!-- Success Message (Hidden by default) -->
             <div id="messageBox"
                 class="hidden bg-white p-8 rounded-2xl shadow-2xl text-center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full z-50">
                 <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -66,11 +60,9 @@
                 </button>
             </div>
 
-            <!-- Flip Card Container -->
             <div class="flip-card-container h-[420px] w-full cursor-pointer" id="cardContainer">
                 <div class="flip-card-inner" id="flipCardInner">
 
-                    <!-- Front Side (Question) -->
                     <div
                         class="flip-card-front bg-white flex flex-col justify-between items-center p-8 border-t-[6px] border-sky-700">
                         <div class="w-full flex justify-between items-center border-b border-gray-100 pb-4">
@@ -92,7 +84,6 @@
                         </div>
                     </div>
 
-                    <!-- Back Side (Answer) -->
                     <div
                         class="flip-card-back flex flex-col justify-center items-center p-8 text-white relative overflow-hidden">
                         <div class="absolute top-0 right-0 p-4 opacity-10">
@@ -111,22 +102,22 @@
                 </div>
             </div>
 
-            <!-- Action Buttons (Visible after flip) -->
             <div id="actionButtons"
                 class="mt-8 flex justify-center gap-3 invisible opacity-0 transition-all duration-500 transform translate-y-4">
-                <button id="markEasy"
+
+                <button id="markEasy" onclick="window.submitAnswer('EASY')"
                     class="flex-1 py-3 bg-slate-700 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:shadow-emerald-200 flex flex-col items-center justify-center gap-1">
                     <span class="text-lg">Kolay</span>
                     <span class="text-[10px] opacity-80 font-normal">Uzun süre sonra</span>
                 </button>
 
-                <button id="markMedium"
+                <button id="markMedium" onclick="window.submitAnswer('MEDIUM')"
                     class="flex-1 py-3 bg-gray-800 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg hover:shadow-amber-200 flex flex-col items-center justify-center gap-1">
                     <span class="text-lg">Orta</span>
                     <span class="text-[10px] opacity-80 font-normal">Yakın Zamanda</span>
                 </button>
 
-                <button id="markHard"
+                <button id="markHard" onclick="window.submitAnswer('HARD')"
                     class="flex-1 py-3 bg-zinc-900 hover:bg-rose-600 text-white font-bold rounded-xl shadow-lg hover:shadow-rose-200 flex flex-col items-center justify-center gap-1">
                     <span class="text-lg">Zor</span>
                     <span class="text-[10px] opacity-80 font-normal">Şimdi Tekrar</span>
@@ -136,10 +127,8 @@
         </div>
     </main>
 
-    <!-- Scripts -->
     <script src="app.js"></script>
 
-    <!-- Toast Notification -->
     <div id="toastNotification"
         class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl z-[100] flex items-center gap-3 transition-all duration-300 opacity-0 translate-y-10 pointer-events-none">
         <i class="fa-solid fa-calendar-check text-green-400"></i>
