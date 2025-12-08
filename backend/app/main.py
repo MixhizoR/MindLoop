@@ -1,5 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 # Import models to ensure they are registered with Base.metadata
@@ -36,6 +39,15 @@ app.add_middleware(
 app.include_router(pdf_upload_endpoint.router)
 app.include_router(study_endpoint.router)
 
+# Frontend entegrasyonu:
+# Frontend dosyalarının (HTML, CSS, JS) bulunduğu klasör yolu
+frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../frontend'))
+
+# 1. Ana sayfaya ("/") gidildiğinde index.html dönsün
 @app.get("/")
-def read_root():
-    return {"message": "MindLoop API is running"}
+async def read_index():
+    return FileResponse(os.path.join(frontend_path, 'index.html'))
+
+# 2. Diğer tüm statik dosyalar (app.js, style.css, resimler vb.) için frontend klasörünü bağla
+# Not: API route'ları yukarıda tanımlandığı için önceliklidir.
+app.mount("/", StaticFiles(directory=frontend_path), name="static")
