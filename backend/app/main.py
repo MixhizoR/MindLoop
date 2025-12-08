@@ -1,6 +1,10 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+<<<<<<< HEAD
 from fastapi.middleware.cors import CORSMiddleware  # <-- 1. Ekleme: Import
+=======
+from fastapi.middleware.cors import CORSMiddleware
+>>>>>>> 9957d5c858a1623b63389912770026e6e88ccc9d
 from .database import engine, Base
 
 # Import models to ensure they are registered with Base.metadata
@@ -29,15 +33,24 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="MindLoop API", lifespan=lifespan)
 
+<<<<<<< HEAD
 # --- 2. Ekleme: CORS Middleware Ayarı (Frontend izni için şart) ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Her yerden gelen isteğe izin ver
+=======
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+>>>>>>> 9957d5c858a1623b63389912770026e6e88ccc9d
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+<<<<<<< HEAD
 # ------------------------------------------------------------------
+=======
+>>>>>>> 9957d5c858a1623b63389912770026e6e88ccc9d
 
 app.include_router(pdf_upload_endpoint.router)
 app.include_router(study_endpoint.router)
