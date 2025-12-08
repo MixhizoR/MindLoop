@@ -1,281 +1,278 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ==================================================
-    // GLOBAL SELECTORS & PAGE CHECK
-    // ==================================================
+    const API_BASE_URL = "http://127.0.0.1:8000";
+    console.log("App Başlatıldı. API:", API_BASE_URL);
+
     const isStudyPage = document.getElementById('cardContainer');
     const isUploadPage = document.getElementById('uploadBtn');
 
     // ==================================================
-    // PART 1: STUDY PAGE LOGIC (index.html)
+    // 1. ÇALIŞMA SAYFASI (Flashcard Mantığı)
     // ==================================================
     if (isStudyPage) {
-        // DOM Elements
+        // ... (Bu kısım aynı, çalışıyor) ...
         const cardContainer = document.getElementById('cardContainer');
         const flipCardInner = document.getElementById('flipCardInner');
         const actionButtons = document.getElementById('actionButtons');
         const messageBox = document.getElementById('messageBox');
-
-        // Content Elements
         const questionEl = document.getElementById('cardQuestion');
         const answerEl = document.getElementById('cardAnswer');
         const cardCategory = document.getElementById('cardCategory');
-
-        // State Variables
         let studyQueue = [];
         let currentIndex = 0;
         let isFlipped = false;
         let toastTimeout;
 
-        // --- 1. INITIALIZE DATA ---
         function fetchDailyCards() {
-            // Check LocalStorage for real user data
-            const storedData = localStorage.getItem('studyCards');
-
-            if (storedData) {
-                studyQueue = JSON.parse(storedData);
-            } else {
-                // Production Mode: Start empty if no data exists
-                studyQueue = [];
-            }
-
-            // Render first card or finish screen
-            if (studyQueue.length > 0) {
-                loadCard(0);
-            } else {
-                showFinishMessage();
-            }
+            try { studyQueue = JSON.parse(localStorage.getItem('studyCards')) || []; }
+            catch { studyQueue = []; }
+            if (studyQueue.length > 0) loadCard(0); else showFinishMessage();
         }
 
-        // --- 2. RENDER CARD ---
         function loadCard(index) {
-            if (index >= studyQueue.length) {
-                showFinishMessage();
-                return;
-            }
-
+            if (index >= studyQueue.length) { showFinishMessage(); return; }
             const data = studyQueue[index];
-
-            // Reset Card State
-            flipCardInner.classList.remove('is-flipped');
-            isFlipped = false;
+            flipCardInner.classList.remove('is-flipped'); isFlipped = false;
             actionButtons.classList.add('invisible', 'opacity-0');
-
-            // Fill Content
-            questionEl.textContent = data.question;
-            answerEl.textContent = data.answer;
-            if (cardCategory) cardCategory.textContent = data.title;
+            questionEl.textContent = data.question || data.front || "Soru Yok";
+            answerEl.textContent = data.answer || data.back || "Cevap Yok";
+            if (cardCategory) cardCategory.textContent = data.title || "Genel";
         }
 
-        // --- 3. FLIP INTERACTION ---
         cardContainer.addEventListener('click', () => {
-            hideToast(); // Clear existing toasts
-
-            if (!isFlipped) {
-                flipCardInner.classList.add('is-flipped');
-                actionButtons.classList.remove('invisible', 'opacity-0');
-                isFlipped = true;
-            }
+            const t = document.getElementById('toastNotification'); if (t) t.classList.add('opacity-0', 'translate-y-10');
+            if (!isFlipped) { flipCardInner.classList.add('is-flipped'); actionButtons.classList.remove('invisible', 'opacity-0'); isFlipped = true; }
         });
 
-        // Close toast when clicking outside
-        document.body.addEventListener('click', (e) => {
-            if (!e.target.closest('button') && !e.target.closest('.flip-card-container')) {
-                hideToast();
-            }
-        });
-
-        function hideToast() {
-            const toast = document.getElementById('toastNotification');
-            if (toast) {
-                toast.classList.add('opacity-0', 'translate-y-10');
-            }
-        }
-
-        // --- 4. SUBMIT ANSWER (ALGORITHM & TOAST) ---
         window.submitAnswer = function (difficulty) {
             if (!isFlipped) return;
-
             if (toastTimeout) clearTimeout(toastTimeout);
-
             const currentCard = studyQueue[currentIndex];
             const nextIndex = currentIndex + 1;
-
-            // --- SM-2 Simplified Algorithm ---
             const now = new Date();
             let nextReviewDate = new Date();
-            let userMessage = "";
+            if (difficulty === 'EASY') nextReviewDate.setDate(now.getDate() + 3);
+            else if (difficulty === 'MEDIUM') nextReviewDate.setDate(now.getDate() + 1);
 
-            if (difficulty === 'EASY') {
-                nextReviewDate.setDate(now.getDate() + 3); // +3 Days
-                userMessage = "Süper! 3 gün sonraya planlandı.";
-            } else if (difficulty === 'MEDIUM') {
-                nextReviewDate.setDate(now.getDate() + 1); // +1 Day
-                userMessage = "Tamam, yarına planlandı.";
-            } else {
-                // HARD: Review same day
-                userMessage = "Zorlandın mı? Yakında tekrar edelim.";
-            }
-
-            const dateStr = nextReviewDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
-
-            // Show Toast Notification
-            const toast = document.getElementById('toastNotification');
-            if (toast) {
-                const toastText = document.getElementById('toastText');
-                toastText.innerHTML = `${userMessage} <span class="text-gray-400 text-xs ml-1">(${dateStr})</span>`;
-
-                // Reset animation
-                toast.classList.add('opacity-0', 'translate-y-10');
-                setTimeout(() => {
-                    toast.classList.remove('opacity-0', 'translate-y-10');
-                }, 10);
-
-                // Auto hide after 1.5s
-                toastTimeout = setTimeout(() => {
-                    hideToast();
-                }, 1500);
-            }
-
-            // Update Storage
-            let allCards = JSON.parse(localStorage.getItem('studyCards')) || [];
-            const updatedCards = allCards.map(card => {
-                if (card.id === currentCard.id) {
-                    return { ...card, nextReviewDate: nextReviewDate.toISOString() };
-                }
-                return card;
+            const allCards = JSON.parse(localStorage.getItem('studyCards')) || [];
+            const updatedCards = allCards.map(c => {
+                if ((c.id && c.id === currentCard.id) || (c.question === currentCard.question)) {
+                    return { ...c, nextReviewDate: nextReviewDate.toISOString() };
+                } return c;
             });
             localStorage.setItem('studyCards', JSON.stringify(updatedCards));
 
-            // Move to Next Card
-            if (nextIndex >= studyQueue.length) {
-                showFinishMessage();
-                return;
-            }
-
+            if (nextIndex >= studyQueue.length) { showFinishMessage(); return; }
             const nextCard = studyQueue[nextIndex];
-
-            // Pre-load next question (invisible side)
-            questionEl.textContent = nextCard.question;
-            if (cardCategory) cardCategory.textContent = nextCard.title;
-
-            flipCardInner.classList.remove('is-flipped');
-            actionButtons.classList.add('invisible', 'opacity-0');
-            isFlipped = false;
-
-            // Wait for flip animation
-            setTimeout(() => {
-                currentIndex++;
-                answerEl.textContent = nextCard.answer;
-            }, 1000);
+            questionEl.textContent = nextCard.question || nextCard.front;
+            if (cardCategory) cardCategory.textContent = nextCard.title || "Genel";
+            flipCardInner.classList.remove('is-flipped'); actionButtons.classList.add('invisible', 'opacity-0'); isFlipped = false;
+            setTimeout(() => { currentIndex++; answerEl.textContent = nextCard.answer || nextCard.back; }, 600);
         };
 
-        // --- 5. FINISH SCREEN ---
         function showFinishMessage() {
             document.getElementById('cardContainer').classList.add('hidden');
             actionButtons.classList.add('hidden');
             messageBox.classList.remove('hidden');
-            hideToast();
         }
 
-        // Button Event Listeners
         document.getElementById('markEasy').addEventListener('click', (e) => { e.stopPropagation(); window.submitAnswer('EASY'); });
         document.getElementById('markMedium').addEventListener('click', (e) => { e.stopPropagation(); window.submitAnswer('MEDIUM'); });
         document.getElementById('markHard').addEventListener('click', (e) => { e.stopPropagation(); window.submitAnswer('HARD'); });
-
-        // --- 6. FAVICON FIX (Square to Circle) ---
-        const imagePath = 'mindloop.jpeg';
-        const link = document.querySelector("link[rel~='icon']");
-        if (link) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 64; canvas.height = 64;
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            img.src = imagePath;
-            img.onload = () => {
-                ctx.beginPath(); ctx.arc(32, 32, 32, 0, Math.PI * 2, true); ctx.closePath(); ctx.clip();
-                ctx.drawImage(img, 0, 0, 64, 64);
-                link.href = canvas.toDataURL();
-            };
-        }
-
-        // Initialize App
         fetchDailyCards();
     }
 
     // ==================================================
-    // PART 2: UPLOAD PAGE LOGIC (upload.html)
+    // 2. YÜKLEME SAYFASI (GÜNCELLENDİ)
     // ==================================================
     if (isUploadPage) {
+        console.log("Upload sayfası aktif.");
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
         const fileNameDisplay = document.getElementById('fileName');
         const fileNameArea = document.getElementById('fileNameArea');
         const uploadStatus = document.getElementById('uploadStatus');
 
-        // File Selection Handler
+        let pollingInterval = null;
+        let consecutiveErrors = 0;
+        const MAX_RETRIES = 3;
+
+        // Dosya Seçimi
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 const file = e.target.files[0];
                 fileNameDisplay.textContent = file.name;
                 fileNameArea.classList.remove('hidden');
                 fileNameArea.classList.add('flex');
+
                 uploadBtn.disabled = false;
                 uploadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                uploadBtn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Kartları Oluştur`;
+                uploadStatus.classList.add('hidden');
             }
         });
 
-        // Upload Button Handler
-        uploadBtn.addEventListener('click', () => {
+        // --- BUTON TIKLAMA ---
+        uploadBtn.addEventListener('click', async (e) => {
+            console.log("Butona tıklandı.");
+            e.preventDefault();
+
             const file = fileInput.files[0];
             if (!file) return;
 
-            const originalBtnText = uploadBtn.innerHTML;
-            uploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Okunuyor...`;
+            const originalBtnText = `<i class="fa-solid fa-wand-magic-sparkles"></i> Kartları Oluştur`;
+
+            // UI: Yükleniyor...
+            uploadBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Yükleniyor...`;
             uploadBtn.disabled = true;
+            uploadBtn.classList.add('opacity-75', 'cursor-wait');
 
-            const reader = new FileReader();
+            uploadStatus.classList.remove('hidden');
+            uploadStatus.className = 'p-3 rounded-lg text-sm bg-blue-50 text-blue-700 border border-blue-200 mt-4 animate-pulse block';
+            uploadStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Dosya sunucuya gönderiliyor...`;
 
-            reader.onload = function (e) {
+            try {
+                const formData = new FormData();
+                formData.append('pdf_file', file);
+
+                console.log("Fetch isteği gönderiliyor...");
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+                const response = await fetch(`${API_BASE_URL}/pdf/upload-pdf`, {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                console.log("Fetch yanıtı geldi. Status:", response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Hata Kodu: ${response.status}`);
+                }
+
+                console.log("DataGetiriliyor:");
+                const data = await response.json();
+                console.log("Gelen Data:", data);
+
+                // --- Dosya Yüklendi (Yeşil) ---
+                uploadStatus.className = 'p-3 rounded-lg text-sm bg-green-100 text-green-700 border border-green-200 mt-4 block';
+                uploadStatus.innerHTML = `<i class="fa-solid fa-circle-check"></i> <strong>Dosya Yüklendi!</strong><br><span class="text-xs">İçerik analiz ediliyor...</span>`;
+
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // --- AI İşleniyor (Mor) ---
+                uploadBtn.innerHTML = `<i class="fa-solid fa-brain fa-bounce"></i> AI Kartları Oluşturuyor...`;
+                uploadStatus.className = 'p-3 rounded-lg text-sm bg-indigo-50 text-indigo-700 border border-indigo-200 mt-4 block';
+                uploadStatus.innerHTML = `<i class="fa-solid fa-microchip"></i> <strong>İşleniyor...</strong> Yapay zeka içeriği analiz ediyor, lütfen bekleyin.`;
+
+                startPolling(data.task_id, originalBtnText, file.name);
+
+            } catch (error) {
+                console.error("Yükleme sırasında hata:", error);
+                handleError(error, originalBtnText, true);
+            }
+        });
+
+        // --- POLLING ---
+        function startPolling(taskId, originalBtnText, originalFileName) {
+            console.log("Polling başlatıldı:", taskId);
+            consecutiveErrors = 0;
+            if (pollingInterval) clearInterval(pollingInterval);
+
+            pollingInterval = setInterval(async () => {
                 try {
-                    // Parse JSON
-                    const fileContent = e.target.result;
-                    const newQuestions = JSON.parse(fileContent);
+                    const res = await fetch(`${API_BASE_URL}/pdf/task/${taskId}`);
 
-                    // Validation
-                    if (!Array.isArray(newQuestions)) {
-                        throw new Error("Dosya formatı hatalı! JSON bir liste ([...]) olmalı.");
+                    if (!res.ok) {
+                        if (res.status === 404) throw new Error("Task bulunamadı");
+                        else throw new Error("Sunucu yanıt vermiyor");
                     }
 
-                    // Save to Storage
-                    const existingData = JSON.parse(localStorage.getItem('studyCards')) || [];
-                    const updatedData = existingData.concat(newQuestions);
-                    localStorage.setItem('studyCards', JSON.stringify(updatedData));
+                    const result = await res.json();
+                    console.log("Polling Durumu:", result.status);
+                    consecutiveErrors = 0;
 
-                    // Success Feedback
-                    setTimeout(() => {
-                        uploadBtn.innerHTML = originalBtnText;
-                        uploadBtn.disabled = false;
+                    if (result.status === 'completed') {
+                        clearInterval(pollingInterval);
 
-                        uploadStatus.classList.remove('hidden');
-                        uploadStatus.classList.add('bg-green-100', 'text-green-700', 'border', 'border-green-200');
-                        uploadStatus.innerHTML = `<i class="fa-solid fa-circle-check"></i> <strong>Harika!</strong> ${newQuestions.length} yeni soru yüklendi.`;
+                        const newCards = result.data.map((item, index) => ({
+                            id: Date.now() + index,
+                            question: item.front,
+                            answer: item.back,
+                            title: originalFileName,
+                            nextReviewDate: new Date().toISOString()
+                        }));
 
-                        fileInput.value = "";
-                        fileNameArea.classList.add('hidden');
-                        uploadBtn.disabled = true;
-                        uploadBtn.classList.add('opacity-50');
-                    }, 1000);
+                        saveToLocalStorage(newCards);
+                        showSuccessUI(newCards.length, originalBtnText);
+
+                    } else if (result.status === 'failed') {
+                        clearInterval(pollingInterval);
+                        handleError(new Error(result.error), originalBtnText, true);
+                    }
 
                 } catch (error) {
-                    uploadBtn.innerHTML = originalBtnText;
-                    uploadBtn.disabled = false;
-                    alert("Hata: " + error.message);
-                    console.error("JSON Error:", error);
+                    console.warn("Polling hatası:", error);
+                    consecutiveErrors++;
+                    if (consecutiveErrors >= MAX_RETRIES) {
+                        clearInterval(pollingInterval);
+                        handleError(new Error("Bağlantı koptu."), originalBtnText, true);
+                    }
                 }
-            };
+            }, 2000);
+        }
 
-            reader.readAsText(file);
-        });
+        function saveToLocalStorage(newCards) {
+            const existingData = JSON.parse(localStorage.getItem('studyCards')) || [];
+            localStorage.setItem('studyCards', JSON.stringify(existingData.concat(newCards)));
+        }
+
+        function showSuccessUI(count, originalBtnText) {
+            // Buton ve Input temizliği
+            uploadBtn.innerHTML = `<i class="fa-solid fa-check"></i> Tamamlandı`;
+            uploadBtn.disabled = false;
+            uploadBtn.classList.remove('cursor-wait', 'opacity-75');
+            fileInput.value = "";
+            fileNameArea.classList.add('hidden');
+
+            // Yeşil Başarı Mesajı
+            uploadStatus.className = 'p-4 rounded-lg text-sm bg-green-100 text-green-800 border border-green-200 mt-4 shadow-sm block';
+            uploadStatus.innerHTML = `
+                <div class="flex flex-col items-center gap-2">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-circle-check text-2xl"></i>
+                        <div>
+                            <h4 class="font-bold">İşlem Başarılı!</h4>
+                            <p>${count} yeni kart eklendi.</p>
+                        </div>
+                    </div>
+                    <div class="text-xs font-semibold text-green-700 mt-2">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Ana sayfaya yönlendiriliyorsunuz...
+                    </div>
+                </div>
+            `;
+
+            // --- YÖNLENDİRME KODU BURADA ---
+            // Kullanıcının "Başarılı" mesajını görmesi için 2 saniye bekleyip sayfayı değiştiriyoruz.
+            setTimeout(() => {
+                window.location.href = "index.html";
+            }, 2000);
+        }
+
+        function handleError(error, originalBtnText, isFatal = false) {
+            if (isFatal) {
+                uploadBtn.innerHTML = originalBtnText;
+                uploadBtn.disabled = false;
+                uploadBtn.classList.remove('opacity-75', 'cursor-wait');
+
+                uploadStatus.className = 'p-3 rounded-lg text-sm bg-red-100 text-red-700 border border-red-200 mt-4 block';
+                uploadStatus.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <strong>Hata:</strong> ${error.message}`;
+                uploadStatus.classList.remove('hidden');
+            }
+        }
     }
 });

@@ -1,39 +1,46 @@
+import asyncio
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, status
 import os
 import uuid
-import shutil
+import tempfile # <--- BU SATIR ÇOK ÖNEMLİ
 from typing import Dict, Any
+import time
 
-# Veritabanı ve Model importları
+# Kendi proje yapına göre importları kontrol et
 from app.models import Card
-# DİKKAT: Arka planda DB işlemi için session factory'ye ihtiyacımız var.
-# Genelde database.py içinde 'SessionLocal' veya 'async_session_maker' adıyla tanımlıdır.
 from app.database import AsyncSessionLocal 
 from resources.PdfAIEntegrations.ai_promt_manager import send_pdf_path_get_card_data
 
-router = APIRouter(
-    prefix="/pdf",
-    tags=["PDF İşleme"] 
-)
+router = APIRouter(prefix="/pdf", tags=["PDF İşleme"])
 
-# Geçici hafıza (Prodüksiyonda Redis veya DB tablosu kullanılmalı)
-# Yapı: { "task_id": { "status": "processing" | "completed" | "failed", "data": ... } }
 TASKS: Dict[str, Any] = {}
 
-async def process_pdf_background(task_id: str, file_path: str, original_filename: str):
-    """
-    Arka planda çalışacak asıl işçi fonksiyon.
-    """
+async def full_background_process(task_id: str, file_bytes: bytes, original_filename: str):
+
+    await asyncio.sleep(1)
+    
+    temp_path = None
     try:
-        # 1. AI İşlemi
-        cards_data = send_pdf_path_get_card_data(file_path)
+        # --- DÜZELTME BURADA ---
+        # Dosyayı projenin içine DEĞİL, bilgisayarın geçici klasörüne kaydediyoruz.
+        # Bu sayede VS Code değişikliği görüp sayfayı yenilemez.
+        temp_dir = tempfile.gettempdir() 
+        temp_path = os.path.join(temp_dir, f"{task_id}_{original_filename}")
+        
+        with open(temp_path, "wb") as f:
+            f.write(file_bytes)
+
+        # AI İşlemi
+        #cards_data = send_pdf_path_get_card_data(temp_path)
+
+        cards_data = [{"front": "Soru buraya", "back": "Cevap buraya"}, {"front": "Soru 2", "back": "Cevap 2"}]
+        time.sleep(10)
         
         if not cards_data:
-            TASKS[task_id] = {"status": "failed", "error": "AI veri üretemedi."}
+            TASKS[task_id] = {"status": "failed", "error": "AI içerikten soru çıkaramadı."}
             return
 
-        # 2. Veritabanına Kayıt
-        # Not: BackgroundTask içinde Depends(get_db) çalışmaz, yeni bir session açmalıyız.
+        # Veritabanı Kayıt
         async with AsyncSessionLocal() as db:
             new_cards = []
             for card_item in cards_data:
@@ -51,82 +58,38 @@ async def process_pdf_background(task_id: str, file_path: str, original_filename
             
             await db.commit()
             
-            # Veritabanı nesnelerini dict'e çevirip task sonucuna ekleyelim (JSON serileştirme için)
-            # Basitlik adına cards_data'yı dönüyoruz.
             TASKS[task_id] = {
                 "status": "completed", 
-                "data": cards_data,
+                "data": cards_data, 
                 "card_count": len(new_cards)
             }
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        TASKS[task_id] = {"status": "failed", "error": str(e)}
+        print(f"Background Task Hatası: {e}")
+        TASKS[task_id] = {"status": "failed", "error": "Hata"}
         
     finally:
-        # 3. Temizlik
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except Exception:
-                pass
+        if temp_path and os.path.exists(temp_path):
+            try: os.remove(temp_path)
+            except: pass
 
-@router.post("/upload-pdf", 
-             status_code=status.HTTP_202_ACCEPTED,
-             summary="PDF Yükle (Asenkron)",
-             response_description="İşlem başlatıldı ve Task ID döndürüldü.")
-async def upload_pdf_endpoint(
-    background_tasks: BackgroundTasks,
-    pdf_file: UploadFile = File(..., description="Yüklenecek PDF dosyası.")
-):
-    # 1. Task ID Oluştur
+@router.post("/upload-pdf", status_code=status.HTTP_202_ACCEPTED)
+async def upload_pdf_endpoint(background_tasks: BackgroundTasks, pdf_file: UploadFile = File(...)):
+    # 1. Task ID
     task_id = str(uuid.uuid4())
     
-    # 2. Dosyayı Diske Kaydet 
-    # (Dosya içeriğini memory'de tutup background'a atmak risklidir, diske yazmak en iyisi)
-    temp_dir = "temp_uploads"
-    os.makedirs(temp_dir, exist_ok=True)
-    file_location = os.path.join(temp_dir, f"{task_id}_{pdf_file.filename}")
+    # 2. Dosyayı RAM'e Oku
+    file_bytes = await pdf_file.read()
     
-    with open(file_location, "wb") as f:
-        content = await pdf_file.read()
-        f.write(content)
-
-    # 3. Task Durumunu 'Processing' Olarak İşaretle
+    # 3. İşlem Başlat
     TASKS[task_id] = {"status": "processing"}
+    background_tasks.add_task(full_background_process, task_id, file_bytes, pdf_file.filename)
 
-    # 4. Arka Plan Görevini Kuyruğa Ekle
-    background_tasks.add_task(
-        process_pdf_background, 
-        task_id, 
-        file_location, 
-        pdf_file.filename
-    )
+    # 4. Hemen Cevap Dön
+    return {"task_id": task_id, "status": "queued", "message": "İşleme alındı."}
 
-    # 5. Anında Cevap Dön (Fire and Forget)
-    return {
-        "task_id": task_id,
-        "status": "processing",
-        "message": "PDF yüklendi, arka planda işleniyor. Durumu /task/{task_id} adresinden kontrol edin."
-    }
-
-@router.get("/task/{task_id}", summary="İşlem Durumu Sorgula")
+@router.get("/task/{task_id}")
 async def get_task_status(task_id: str):
     task = TASKS.get(task_id)
-    
-    if not task:
-        raise HTTPException(status_code=404, detail="Task bulunamadı.")
-        
-    if task["status"] == "processing":
-        return {"status": "processing"}
-    
-    if task["status"] == "failed":
-        return {"status": "failed", "error": task.get("error")}
-        
-    # status == completed
-    return {
-        "status": "completed",
-        "data": task.get("data"),
-        "card_count": task.get("card_count")
-    }
+    if not task: raise HTTPException(status_code=404, detail="Task bulunamadı.")
+    return task
