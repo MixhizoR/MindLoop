@@ -30,11 +30,11 @@ async def full_background_process(task_id: str, file_bytes: bytes, original_file
         with open(temp_path, "wb") as f:
             f.write(file_bytes)
 
-        # AI İşlemi
-        #cards_data = send_pdf_path_get_card_data(temp_path)
+        #AI İşlemi
+        cards_data = send_pdf_path_get_card_data(temp_path)
 
-        cards_data = [{"front": "Soru buraya", "back": "Cevap buraya"}, {"front": "Soru 2", "back": "Cevap 2"}]
-        time.sleep(10)
+        #cards_data = [{"front": "Soru buraya", "back": "Cevap buraya"}, {"front": "Soru 2", "back": "Cevap 2"}]
+        #time.sleep(10)
         
         if not cards_data:
             TASKS[task_id] = {"status": "failed", "error": "AI içerikten soru çıkaramadı."}
