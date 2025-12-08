@@ -4,6 +4,7 @@ __pycache__/
 backend/venv/
 backend/.env
 *.db
+*.db.bac
 .DS_Store
 .agent/
 .dist
