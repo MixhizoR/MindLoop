@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-db_path = 'learning.db'
+db_path = "../learning.db"
 
 if not os.path.exists(db_path):
     print(f"Hata: {db_path} bulunamadı.")
@@ -10,7 +10,7 @@ if not os.path.exists(db_path):
 connection = sqlite3.connect(db_path)
 cursor = connection.cursor()
 
-with open('seed_cards.sql', 'r', encoding='utf-8') as f:
+with open("seed_cards.sql", "r", encoding="utf-8") as f:
     sql_script = f.read()
 
 try:
