@@ -98,7 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- 3. KARTI ÇEVİR ---
         cardContainer.addEventListener('click', () => {
-            hideToast();
             if (studyQueue.length > 0 && !isFlipped) {
                 flipCardInner.classList.add('is-flipped');
 
@@ -142,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 toastNotification.classList.remove('opacity-0', 'translate-y-10');
 
                 if (toastTimeout) clearTimeout(toastTimeout);
-                toastTimeout = setTimeout(hideToast, 3000);
+                toastTimeout = setTimeout(hideToast, 9000);
 
                 // Sonraki karta geç
                 const nextIndex = currentIndex + 1;
